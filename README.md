@@ -147,6 +147,17 @@ Key settings in `appsettings.json`:
 
 Can be overridden with environment variables: `Game__ScoreboardExpirationHours=12`, `Cors__AllowedOrigin=https://mygame.com`
 
+## AI Usage
+
+[Claude Code](https://claude.ai/code) (Anthropic's CLI) was used throughout this project as a pair programming tool — scaffolding boilerplate, explaining .NET patterns, suggesting refactors, and catching bugs. All architectural decisions, code review, and reasoning behind trade-offs were my own. The tool accelerated implementation; it did not replace understanding.
+
+Specific areas where AI assistance was used:
+- Initial project scaffold and folder structure
+- Docker and nginx configuration
+- Identifying the `random_number` snake_case deserialisation bug in `RandomService`
+- Frontend component decomposition and `useGame` hook design
+- Unit and integration test setup (Vitest + React Testing Library)
+
 ## Game Rules
 
 Rock crushes Scissors and Lizard.  
