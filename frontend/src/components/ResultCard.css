@@ -1,0 +1,40 @@
+.result {
+  padding: 1rem 1.5rem;
+  border-radius: 12px;
+  margin-bottom: 1.5rem;
+  border: 2px solid;
+}
+
+.result--win {
+  background: #ecfdf5;
+  border-color: #10b981;
+  color: #065f46;
+}
+
+.result--lose {
+  background: #fef2f2;
+  border-color: #ef4444;
+  color: #7f1d1d;
+}
+
+.result--tie {
+  background: #fefce8;
+  border-color: #eab308;
+  color: #713f12;
+}
+
+.result h2 {
+  margin: 0 0 0.5rem;
+}
+
+.result p {
+  margin: 0;
+}
+
+.choice-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  vertical-align: middle;
+  text-transform: capitalize;
+}

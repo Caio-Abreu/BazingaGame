@@ -1,0 +1,7 @@
+**/.git
+**/.idea
+**/bin
+**/obj
+**/node_modules
+frontend/
+BazingaGame.Tests/

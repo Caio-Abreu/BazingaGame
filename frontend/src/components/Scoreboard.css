@@ -1,0 +1,71 @@
+.scoreboard {
+  border-top: 1px solid #e5e7eb;
+  padding-top: 1rem;
+}
+
+.scoreboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.scoreboard-header h3 {
+  margin: 0;
+}
+
+.reset-btn {
+  padding: 0.3rem 0.75rem;
+  border: 1px solid #333;
+  border-radius: 6px;
+  background: #111;
+  color: #fff;
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+
+.reset-btn:hover:not(:disabled) {
+  background: #333;
+}
+
+.reset-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.empty {
+  color: #9ca3af;
+  font-style: italic;
+}
+
+.scoreboard ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.score-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.4rem 0.75rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+}
+
+.score-item--win {
+  background: #ecfdf5;
+  color: #065f46;
+}
+
+.score-item--lose {
+  background: #fef2f2;
+  color: #7f1d1d;
+}
+
+.score-item--tie {
+  background: #fefce8;
+  color: #713f12;
+}

@@ -1,0 +1,25 @@
+# .NET
+**/bin/
+**/obj/
+*.user
+*.suo
+.vs/
+*.dll
+*.pdb
+
+# Test results
+TestResults/
+
+# npm / frontend
+node_modules/
+dist/
+.vite/
+
+# Environment
+.env
+.env.local
+appsettings.Development.json
+
+# OS
+.DS_Store
+Thumbs.db
