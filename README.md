@@ -19,8 +19,8 @@ You need **two terminals open at the same time** — one for the backend, one fo
 ### 1. Clone the repo
 
 ```bash
-git clone <your-repo-url>
-cd bazinga-game
+git clone git@github.com:Caio-Abreu/BazingaGame.git
+cd BazingaGame
 ```
 
 ### 2. Start the backend (Terminal 1)
