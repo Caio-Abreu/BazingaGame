@@ -26,7 +26,14 @@ The mapping uses `(int)(Math.Abs((long)n) % 5) + 1`. The cast to `long` before `
 - **2 retries with exponential backoff** — recovers from transient failures
 - **Circuit breaker** — if 50% of calls fail in a 30-second window, the circuit opens and the dependency is stopped from being hammered while it recovers
 
-**Fallback to local random**: when the external service is unavailable (circuit open, timeout, any exception), `RandomService` catches the exception, logs a warning, and returns `Random.Shared.Next(1, 6)`. The circuit breaker protects the dependency — it does not take the game down with it. The warning in logs makes the degraded state visible without it being invisible to operators.
+**Fallback to local random**: when the external service is unavailable (circuit open, timeout, any exception), `RandomService` catches the exception and returns `Random.Shared.Next(1, 6)`. The circuit breaker protects the dependency — it does not take the game down with it.
+
+The fallback is logged at `Warning` (not `Error`) with three structured properties:
+- `ExternalService` — identifies which dependency failed, useful when there are multiple external calls
+- `FallbackUsed` — queryable boolean; an observability tool can alert on `FallbackUsed = true AND count > N in 5 minutes`
+- `ExceptionType` — distinguishes `HttpRequestException` (network) from `TaskCanceledException` (timeout) from `BrokenCircuitException` (circuit open) without parsing free-text
+
+`Warning` rather than `Error` because the system degraded gracefully — the user got a valid response. The signal is "monitor this", not "wake someone up".
 
 ## Game Logic
 
