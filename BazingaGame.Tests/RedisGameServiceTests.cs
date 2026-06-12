@@ -15,7 +15,6 @@ namespace BazingaGame.Tests;
 public class RedisGameServiceTests
 {
     private static readonly PlayResult Win = new("win", 1, 3);
-    private static readonly PlayResult Lose = new("lose", 3, 1);
 
     private static (RedisGameService sut, Mock<IDatabase> dbMock) BuildSut(
         params string[] storedEntries)
