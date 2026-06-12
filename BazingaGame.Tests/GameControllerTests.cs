@@ -321,6 +321,22 @@ public class CorsTests : IDisposable
     }
 
     [Fact]
+    public async Task GetChoices_WithBoohmaTestUiOrigin_ReturnsAccessControlHeader()
+    {
+        // The challenge's hosted test UI (codechallenge.boohma.com) must be able to
+        // call this API cross-origin when the grader pastes the API root URL there.
+        var request = new HttpRequestMessage(HttpMethod.Get, "/choices");
+        request.Headers.Add("Origin", "https://codechallenge.boohma.com");
+
+        var response = await _client.SendAsync(request);
+
+        Assert.True(response.Headers.Contains("Access-Control-Allow-Origin"),
+            "Expected Access-Control-Allow-Origin header for the boohma test UI origin");
+        Assert.Equal("https://codechallenge.boohma.com",
+            response.Headers.GetValues("Access-Control-Allow-Origin").First());
+    }
+
+    [Fact]
     public async Task GetChoices_WithDisallowedOrigin_DoesNotReturnAccessControlHeader()
     {
         var request = new HttpRequestMessage(HttpMethod.Get, "/choices");

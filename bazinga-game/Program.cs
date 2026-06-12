@@ -35,9 +35,11 @@ builder.Services.AddGameSwagger();
 builder.Services.AddGameRateLimiting();
 builder.Services.AddGameHealthChecks(builder.Configuration);
 
+var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>()
+    ?? [];
 builder.Services.AddCors(options =>
     options.AddPolicy("Frontend", policy =>
-        policy.WithOrigins(builder.Configuration["Cors:AllowedOrigin"]!)
+        policy.WithOrigins(allowedOrigins)
               .WithHeaders("Content-Type", "X-Player-Id")
               .WithMethods("GET", "POST", "DELETE")));
 
