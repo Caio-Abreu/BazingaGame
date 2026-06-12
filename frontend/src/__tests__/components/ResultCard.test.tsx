@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
-import { ResultCard } from "../../components/ResultCard";
+import { ResultCard } from "../../components";
 import { ChoiceProvider } from "../../context/ChoiceContext";
 import type { ScoredResult } from "../../types/game";
 

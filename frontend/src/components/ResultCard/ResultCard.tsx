@@ -1,7 +1,7 @@
 import "./ResultCard.css";
-import type { ScoredResult } from "../types/game";
-import { RESULT_LABEL, choiceIcon } from "../constants/game";
-import { useChoiceMap } from "../context/ChoiceContext";
+import type { ScoredResult } from "../../types/game";
+import { RESULT_LABEL, choiceIcon } from "../../constants/game";
+import { useChoiceMap } from "../../context/ChoiceContext";
 
 interface Props {
   result: ScoredResult;

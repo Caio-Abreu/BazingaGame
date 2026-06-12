@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { Scoreboard } from "../../components/Scoreboard";
+import { Scoreboard } from "../../components";
 import { ChoiceProvider } from "../../context/ChoiceContext";
 import type { ScoredResult } from "../../types/game";
 
