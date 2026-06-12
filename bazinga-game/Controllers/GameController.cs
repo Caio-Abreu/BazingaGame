@@ -40,7 +40,7 @@ public class GameController(
     [HttpPost("/play")]
     [EnableRateLimiting("play")]
     [ProducesResponseType(typeof(PlayResult), 200)]
-    [ProducesResponseType(typeof(ValidationProblemDetails), 400)]
+    [ProducesResponseType(typeof(ValidationErrorResponse), 400)]
     [ProducesResponseType(typeof(ErrorResponse), 429)]
     [ProducesResponseType(typeof(ErrorResponse), 500)]
     public async Task<ActionResult<PlayResult>> Play([FromBody] PlayRequest request)
