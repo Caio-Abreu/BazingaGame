@@ -15,6 +15,11 @@ builder.Host.UseSerilog((context, config) =>
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
         options.JsonSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase);
+
+// Suppress the default 400 ProblemDetails Swagger auto-generates for [ApiController] endpoints.
+// Our [ProducesResponseType(typeof(ValidationProblemDetails), 400)] annotations are authoritative.
+builder.Services.Configure<Microsoft.AspNetCore.Mvc.ApiBehaviorOptions>(options =>
+    options.SuppressMapClientErrors = true);
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
