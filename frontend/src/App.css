@@ -11,6 +11,17 @@
   margin-bottom: 1.5rem;
 }
 
+@media (max-width: 480px) {
+  .app {
+    padding: 1rem;
+  }
+
+  .app h1 {
+    font-size: 1.2rem;
+    margin-bottom: 1rem;
+  }
+}
+
 .error-banner {
   background: #fef2f2;
   border: 1px solid #ef4444;
@@ -24,4 +35,15 @@
 .status {
   color: #888;
   font-style: italic;
+}
+
+.error-boundary {
+  max-width: 400px;
+  margin: 4rem auto;
+  text-align: center;
+  padding: 2rem;
+  border: 1px solid #ef4444;
+  border-radius: 12px;
+  background: #fef2f2;
+  color: #7f1d1d;
 }
