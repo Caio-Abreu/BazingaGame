@@ -147,6 +147,50 @@ Key settings in `appsettings.json`:
 
 Can be overridden with environment variables: `Game__ScoreboardExpirationHours=12`, `Cors__AllowedOrigin=https://mygame.com`
 
+## Contributing
+
+### Branch Strategy
+
+| Branch | Purpose |
+|--------|---------|
+| `main` | Production-ready code — never commit directly |
+| `develop` | Integration branch — all feature work merges here first |
+| `feature/*` | New features — branch off `develop` |
+| `fix/*` | Bug fixes — branch off `develop` |
+| `docs/*` | Documentation only — branch off `develop` |
+
+```bash
+# Start a new piece of work
+git checkout develop
+git pull origin develop
+git checkout -b feature/my-feature
+
+# When done, push and open a PR → develop
+git push origin feature/my-feature
+```
+
+### Commit Convention
+
+Follows [Conventional Commits](https://www.conventionalcommits.org/):
+
+| Prefix | When to use |
+|--------|-------------|
+| `feat:` | New feature |
+| `fix:` | Bug fix |
+| `test:` | Adding or updating tests |
+| `refactor:` | Code change that isn't a fix or feature |
+| `docs:` | README, DECISIONS.md, comments |
+| `chore:` | Build config, dependencies, tooling |
+| `obs:` | Observability — logging, metrics, tracing |
+
+Examples:
+```
+feat: add per-player scoreboard with sliding expiration
+fix: handle int.MinValue overflow in random number mapping
+test: add rate limiting and CORS integration tests
+docs: document structured logging decision for random fallback
+```
+
 ## AI Usage
 
 [Claude Code](https://claude.ai/code) (Anthropic's CLI) was used throughout this project as a pair programming tool — scaffolding boilerplate, explaining .NET patterns, suggesting refactors, and catching bugs. All architectural decisions, code review, and reasoning behind trade-offs were my own. The tool accelerated implementation; it did not replace understanding.
