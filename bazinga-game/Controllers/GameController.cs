@@ -11,9 +11,12 @@ public class GameController(
     IRandomService randomService,
     ILogger<GameController> logger) : ControllerBase
 {
-    // Falls back to IP address so the API still works without a session header
+    // Falls back to IP address so the API still works without a session header.
+    // Max 128 chars to prevent oversized strings becoming Redis keys or log noise.
     private string PlayerSessionId =>
-        Request.Headers.TryGetValue("X-Player-Id", out var id) && !string.IsNullOrWhiteSpace(id)
+        Request.Headers.TryGetValue("X-Player-Id", out var id)
+            && !string.IsNullOrWhiteSpace(id)
+            && id.ToString().Length <= 128
             ? id.ToString()
             : HttpContext.Connection.RemoteIpAddress?.ToString() ?? "anonymous";
 

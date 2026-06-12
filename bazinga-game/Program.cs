@@ -3,6 +3,7 @@ using BazingaGame.Middleware;
 using BazingaGame.Services;
 using Microsoft.AspNetCore.RateLimiting;
 using Serilog;
+using StackExchange.Redis;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -34,8 +35,8 @@ builder.Services.AddHttpClient<IRandomService, RandomService>()
 var redisConnectionString = builder.Configuration.GetConnectionString("Redis");
 if (!string.IsNullOrEmpty(redisConnectionString))
 {
-    builder.Services.AddStackExchangeRedisCache(options =>
-        options.Configuration = redisConnectionString);
+    var multiplexer = ConnectionMultiplexer.Connect(redisConnectionString);
+    builder.Services.AddSingleton<IConnectionMultiplexer>(multiplexer);
     builder.Services.AddSingleton<IGameService, RedisGameService>();
 }
 else
@@ -84,11 +85,14 @@ builder.Services.AddRateLimiter(options =>
             }));
 });
 
-builder.Services.AddHealthChecks()
+var healthChecks = builder.Services.AddHealthChecks()
     .AddUrlGroup(
         new Uri("https://codechallenge.boohma.com/random"),
         name: "random-api",
         tags: ["ready"]);
+
+if (!string.IsNullOrEmpty(redisConnectionString))
+    healthChecks.AddRedis(redisConnectionString, name: "redis", tags: ["ready"]);
 
 var app = builder.Build();
 

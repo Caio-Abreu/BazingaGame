@@ -5,57 +5,22 @@ namespace BazingaGame.Services;
 
 public class GameService(IMemoryCache cache, IConfiguration configuration) : IGameService
 {
-    private static readonly IReadOnlyList<Choice> Choices =
-    [
-        new(1, "rock"),
-        new(2, "paper"),
-        new(3, "scissors"),
-        new(4, "lizard"),
-        new(5, "spock"),
-    ];
-
-    private static readonly HashSet<(int, int)> WinConditions =
-    [
-        (1, 3), (1, 4),  // rock beats scissors, lizard
-        (2, 1), (2, 5),  // paper beats rock, spock
-        (3, 2), (3, 4),  // scissors beats paper, lizard
-        (4, 5), (4, 2),  // lizard beats spock, paper
-        (5, 3), (5, 1),  // spock beats scissors, rock
-    ];
-
     private readonly MemoryCacheEntryOptions _scoreboardCacheOptions = new MemoryCacheEntryOptions()
         .SetSlidingExpiration(TimeSpan.FromHours(
             configuration.GetValue<int>("Game:ScoreboardExpirationHours", 6)));
 
     private static string CacheKey(string playerSessionId) => $"scoreboard:{playerSessionId}";
 
-    public IReadOnlyList<Choice> GetAllChoices() => Choices;
+    public IReadOnlyList<Choice> GetAllChoices() => GameRules.Choices;
 
-    public Choice GetChoiceById(int id) =>
-        Choices.FirstOrDefault(c => c.Id == id)
-            ?? throw new ArgumentOutOfRangeException(nameof(id), id, $"No choice exists with id {id}.");
+    public Choice GetChoiceById(int id) => GameRules.GetChoiceById(id);
 
-    public PlayResult DetermineResult(int playerId, int computerId)
-    {
-        if (playerId < 1 || playerId > 5)
-            throw new ArgumentOutOfRangeException(nameof(playerId), playerId,
-                "Player choice must be between 1 and 5.");
-        if (computerId < 1 || computerId > 5)
-            throw new ArgumentOutOfRangeException(nameof(computerId), computerId,
-                "Computer choice must be between 1 and 5.");
-
-        var result = (playerId == computerId) ? "tie"
-            : WinConditions.Contains((playerId, computerId)) ? "win"
-            : "lose";
-
-        return new PlayResult(result, playerId, computerId);
-    }
+    public PlayResult DetermineResult(int playerId, int computerId) =>
+        GameRules.DetermineResult(playerId, computerId);
 
     public void AddToScoreboard(string playerSessionId, PlayResult result)
     {
         var key = CacheKey(playerSessionId);
-
-        // GetOrCreate + re-set to refresh the sliding expiration on each write
         var board = cache.GetOrCreate(key, _ => new List<PlayResult>())!;
 
         lock (board)
@@ -83,8 +48,6 @@ public class GameService(IMemoryCache cache, IConfiguration configuration) : IGa
         }
     }
 
-    public void ResetScoreboard(string playerSessionId)
-    {
+    public void ResetScoreboard(string playerSessionId) =>
         cache.Remove(CacheKey(playerSessionId));
-    }
 }
