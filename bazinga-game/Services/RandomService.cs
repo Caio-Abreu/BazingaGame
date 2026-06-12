@@ -18,9 +18,18 @@ public class RandomService(HttpClient httpClient, ILogger<RandomService> logger)
         }
         catch (Exception ex)
         {
-            // External service is down, circuit is open, or request timed out.
-            // Fall back to local random so the game keeps working without the dependency.
-            logger.LogWarning(ex, "External random service unavailable, falling back to local random.");
+            // Structured properties let observability tools (Datadog, ELK, CloudWatch) filter
+            // and alert on this event independently from generic warnings.
+            // - ExternalService: identifies which dependency failed (useful when there are many)
+            // - FallbackUsed: queryable boolean — "show me all requests that hit the fallback"
+            // - ExceptionType: distinguish timeout vs circuit-open vs DNS failure without parsing the message
+            logger.LogWarning(ex,
+                "External random service unavailable — using local fallback. " +
+                "ExternalService={ExternalService} FallbackUsed={FallbackUsed} ExceptionType={ExceptionType}",
+                "codechallenge.boohma.com",
+                true,
+                ex.GetType().Name);
+
             return Random.Shared.Next(1, 6);
         }
     }
