@@ -31,7 +31,7 @@ export function useGame() {
       })
       .catch((e: unknown) => {
         if (e instanceof Error && e.name === "AbortError") return;
-        setError("Could not connect to the game server. Is the API running?");
+        setError("Could not connect to the game server. Contact the support team.");
       })
       .finally(() => setStatus("idle"));
 

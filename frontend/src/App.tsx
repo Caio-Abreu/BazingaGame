@@ -31,11 +31,13 @@ export default function App() {
 
           {result && !busy && <ResultCard result={result} />}
 
-          <Scoreboard
-            scoreboard={scoreboard}
-            disabled={busy}
-            onReset={reset}
-          />
+          {!initializing && (
+            <Scoreboard
+              scoreboard={scoreboard}
+              disabled={busy}
+              onReset={reset}
+            />
+          )}
         </div>
       </ChoiceProvider>
     </ErrorBoundary>
