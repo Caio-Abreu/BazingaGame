@@ -93,13 +93,31 @@ The fallback is logged at `Warning` (not `Error`) with three structured properti
 
 **Middleware tests** (`ErrorHandlingMiddlewareTests`) cover the happy path, unhandled exceptions (500 + JSON body), client disconnects (`OperationCanceledException` → no 500), and response-already-started handling — using `DefaultHttpContext` with a `MemoryStream` body, no real HTTP server needed.
 
-**Integration tests** (`GameControllerTests`) use `WebApplicationFactory<Program>` to spin up the real ASP.NET pipeline in memory. `IRandomService` is replaced with a deterministic `FakeRandomService`. Each test class creates its own factory instance (not `IClassFixture`) so the singleton `GameService` scoreboard is isolated between tests. Includes `RateLimitTests`, `CorsTests`, `HealthCheckTests`, and `RandomServiceFallbackTests` (uses `FailingHttpHandler` to test the fallback inside `RandomService` directly, rather than replacing the interface).
+**Integration tests** (`GameControllerTests`) use `WebApplicationFactory<Program>` to spin up the real ASP.NET pipeline in memory. `IRandomService` is replaced with a deterministic `FakeRandomService`. Each test class creates its own factory instance (not `IClassFixture`) so the singleton `GameService` scoreboard is isolated between tests. Includes `RateLimitTests`, `CorsTests`, `HealthCheckTests` (both liveness and readiness), `SessionIdentityTests` (X-Player-Id isolation, IP fallback, and the 128-char guard boundary), `SecurityHeadersTests`, and `RandomServiceFallbackTests` (uses `FailingHttpHandler` to test the fallback inside `RandomService` directly, rather than replacing the interface).
+
+## Security Headers
+
+A `SecurityHeadersMiddleware` adds baseline browser-protection headers to every response: `X-Content-Type-Options: nosniff` (no MIME sniffing), `X-Frame-Options: DENY` (anti-clickjacking), and `Referrer-Policy: no-referrer` (don't leak URLs that may carry session ids). HSTS is intentionally omitted because TLS termination happens at the load balancer/ingress layer, which is the correct place to set it.
 
 ## Docker
 
 Multi-stage Dockerfile: the SDK image compiles, **runs `dotnet test`** (a test failure stops the build entirely), then publishes; the runtime image runs the output. The build layer is never shipped. TLS termination is expected at the load balancer/ingress layer, so the container listens on HTTP port 8080.
 
 Redis runs as a sidecar (`redis:7-alpine`) with a `redis-cli ping` healthcheck. The backend `depends_on: service_healthy` so it waits for Redis to be ready before starting.
+
+## Known Trade-offs & Future Work
+
+These are conscious decisions where I stopped short of a heavier solution because the scope didn't justify it. I'm documenting them so the boundaries are explicit rather than accidental.
+
+- **In-memory scoreboard has a known write race.** `GameService` uses `IMemoryCache.GetOrCreate` + `Set`, which is not atomic, so two concurrent writes for the same player could lose an entry under memory pressure. This is acceptable because the in-memory path is the *local-dev fallback*; the production path (`RedisGameService`) eliminates the race entirely with an atomic `LPUSH + LTRIM + EXPIRE` batch. I chose not to add locking to the in-memory path because it would add complexity to a code path that never runs in production.
+
+- **`CancellationToken` is not threaded through the request pipeline.** Controller actions and `IGameService`/`IRandomService` methods don't accept a `CancellationToken`. For sub-100ms operations the benefit is marginal, and the error middleware already handles client-disconnect (`OperationCanceledException`) cleanly. If these operations grew (e.g. a database query, a long external call), I'd propagate `HttpContext.RequestAborted` through the interfaces.
+
+- **Redis is tested with mocks, not a real server.** `RedisGameServiceTests` mock `IConnectionMultiplexer`, which verifies the command logic (correct keys, batch calls, failure handling) but not real serialization round-trips or actual Redis atomicity. For a production service I'd add a [Testcontainers](https://dotnet.testcontainers.org/) Redis instance in CI to cover the integration boundary.
+
+- **The external random API URL is hard-coded.** It lives in `RandomService` and the readiness health check rather than config. For a real deployment with multiple environments I'd move it to `appsettings.json` under a `RandomService:Url` key. It's hard-coded here because there is exactly one upstream and it never changes.
+
+- **Random API failures are intentionally silent to the client.** When the upstream is down, `RandomService` falls back to `Random.Shared` and the client gets a valid result with no error. This is an availability-over-transparency choice: the game should keep working. The fallback is fully observable via structured logs (`FallbackUsed=true`), so an operator can alert on it — the client just doesn't need to know.
 
 ## AI Usage
 
