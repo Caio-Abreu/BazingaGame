@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.RateLimiting;
 namespace BazingaGame.Controllers;
 
 [ApiController]
+[Route("/")]
 public class GameController(
     IGameService gameService,
     IRandomService randomService,
@@ -13,12 +14,19 @@ public class GameController(
 {
     // Falls back to IP address so the API still works without a session header.
     // Max 128 chars to prevent oversized strings becoming Redis keys or log noise.
-    private string PlayerSessionId =>
-        Request.Headers.TryGetValue("X-Player-Id", out var id)
-            && !string.IsNullOrWhiteSpace(id)
-            && id.ToString().Length <= 128
-            ? id.ToString()
-            : HttpContext.Connection.RemoteIpAddress?.ToString() ?? "anonymous";
+    private string PlayerSessionId
+    {
+        get
+        {
+            if (!Request.Headers.TryGetValue("X-Player-Id", out var id))
+                return HttpContext.Connection.RemoteIpAddress?.ToString() ?? "anonymous";
+
+            var playerId = id.ToString();
+            return !string.IsNullOrWhiteSpace(playerId) && playerId.Length <= 128
+                ? playerId
+                : HttpContext.Connection.RemoteIpAddress?.ToString() ?? "anonymous";
+        }
+    }
 
     [HttpGet("/choices")]
     [EnableRateLimiting("read")]
