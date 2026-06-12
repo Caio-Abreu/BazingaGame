@@ -6,9 +6,12 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <InternalsVisibleTo>BazingaGame.Tests</InternalsVisibleTo>
-        <Version>1.1.1</Version>
-        <AssemblyVersion>1.1.1</AssemblyVersion>
-        <FileVersion>1.1.1</FileVersion>
+        <!-- Version carries the next anticipated release with a -dev suffix so develop
+             builds are never mistaken for a release. AssemblyVersion/FileVersion must be
+             numeric (no suffix allowed), so they track the numeric part only. -->
+        <Version>1.2.0-dev</Version>
+        <AssemblyVersion>1.2.0</AssemblyVersion>
+        <FileVersion>1.2.0</FileVersion>
     </PropertyGroup>
 
     <ItemGroup>
