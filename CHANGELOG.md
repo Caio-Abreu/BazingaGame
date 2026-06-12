@@ -7,6 +7,22 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.1.2] — 2026-06-12
+
+### Fixed
+- **CORS blocked the challenge test UI** — the hosted test UI at `codechallenge.boohma.com` calls the API cross-origin, but CORS only permitted `http://localhost:5173`, so the browser blocked it. The config key changed from `Cors:AllowedOrigin` (single string) to `Cors:AllowedOrigins` (array), now whitelisting both our own UI and the test UI. Added an integration test asserting the test-UI origin receives the `Access-Control-Allow-Origin` header.
+
+### Changed
+- Rewrote `DECISIONS.md` in a clearer, junior-friendly voice and synced the README test commands
+
+### Upgrade note
+- **Config change:** if you override CORS via environment variable, `Cors__AllowedOrigin` is now `Cors__AllowedOrigins__0`, `Cors__AllowedOrigins__1`, … (array form).
+
+### Notes
+- No breaking changes to the API contract; backward compatible with 1.1.x
+
+---
+
 ## [1.1.1] — 2026-06-12
 
 ### Fixed

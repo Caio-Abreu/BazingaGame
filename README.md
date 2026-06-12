@@ -57,10 +57,16 @@ Open `http://localhost:5173` in your browser — the game is ready.
 
 ### 4. Run the tests
 
-From the repo root:
+Backend — from the repo root:
 
 ```bash
 dotnet test
+```
+
+Frontend — from the `frontend` folder:
+
+```bash
+npm test
 ```
 
 ## Running with Docker (full stack)
