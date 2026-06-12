@@ -2,3 +2,4 @@ services:
   backend:
     environment:
       ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__Redis: redis:6379
