@@ -1,7 +1,7 @@
 import "./Scoreboard.css";
-import type { ScoredResult } from "../types/game";
-import { choiceIcon } from "../constants/game";
-import { useChoiceMap } from "../context/ChoiceContext";
+import type { ScoredResult } from "../../types/game";
+import { choiceIcon } from "../../constants/game";
+import { useChoiceMap } from "../../context/ChoiceContext";
 
 interface Props {
   scoreboard: ScoredResult[];

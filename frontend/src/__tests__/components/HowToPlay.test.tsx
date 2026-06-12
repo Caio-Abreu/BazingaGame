@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { HowToPlay } from "../../components/HowToPlay";
+import { HowToPlay } from "../../components";
 
 // happy-dom doesn't implement showModal; stub it and mark the dialog open
 HTMLDialogElement.prototype.showModal = vi.fn(function (this: HTMLDialogElement) {

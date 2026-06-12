@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { ChoiceGrid } from "../../components/ChoiceGrid";
+import { ChoiceGrid } from "../../components";
 
 const choices = [
   { id: 1, name: "rock" },

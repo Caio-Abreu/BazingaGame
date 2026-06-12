@@ -1,6 +1,6 @@
 import "./ChoiceGrid.css";
-import type { Choice } from "../types/game";
-import { choiceIcon } from "../constants/game";
+import type { Choice } from "../../types/game";
+import { choiceIcon } from "../../constants/game";
 
 interface Props {
   choices: Choice[];

@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
-import { ChoiceSkeleton } from "../../components/ChoiceSkeleton";
+import { ChoiceSkeleton } from "../../components";
 
 describe("ChoiceSkeleton", () => {
   it("renders 5 skeleton placeholders", () => {
