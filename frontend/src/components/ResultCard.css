@@ -25,10 +25,12 @@
 
 .result h2 {
   margin: 0 0 0.5rem;
+  color: inherit;
 }
 
 .result p {
   margin: 0;
+  color: inherit;
 }
 
 .choice-label {

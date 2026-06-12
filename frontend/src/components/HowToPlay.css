@@ -1,0 +1,95 @@
+.how-to-play {
+  border: none;
+  border-radius: 16px;
+  padding: 0;
+  max-width: 420px;
+  width: calc(100% - 2rem);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+}
+
+.how-to-play::backdrop {
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(2px);
+}
+
+.how-to-play__content {
+  padding: 1.5rem;
+}
+
+.how-to-play__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.how-to-play__header h2 {
+  margin: 0;
+  font-size: 1.2rem;
+  color: #111;
+}
+
+.how-to-play__close {
+  background: none;
+  border: none;
+  font-size: 1rem;
+  cursor: pointer;
+  color: #666;
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
+  line-height: 1;
+}
+
+.how-to-play__close:hover {
+  background: #f3f4f6;
+  color: #111;
+}
+
+.how-to-play__intro {
+  color: #444;
+  font-size: 0.9rem;
+  margin-bottom: 1rem;
+}
+
+.how-to-play__rules {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.how-to-play__rules li {
+  font-size: 0.875rem;
+  color: #333;
+  padding: 0.35rem 0.75rem;
+  background: #f9fafb;
+  border-radius: 8px;
+}
+
+.how-to-play__rules strong {
+  color: #111;
+}
+
+.help-btn {
+  background: none;
+  border: 1px solid #ccc;
+  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  color: #555;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  vertical-align: middle;
+  margin-left: 0.5rem;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.help-btn:hover {
+  border-color: #555;
+  color: #111;
+}

@@ -37,6 +37,7 @@
 
 .choice-btn .label {
   text-transform: capitalize;
+  color: #111;
 }
 
 @media (max-width: 480px) {
