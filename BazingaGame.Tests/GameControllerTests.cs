@@ -386,4 +386,155 @@ public class HealthCheckTests : IDisposable
         var body = await response.Content.ReadAsStringAsync();
         Assert.Equal("Healthy", body);
     }
+
+    [Fact]
+    public async Task ReadinessCheck_ExecutesDependencyChecks()
+    {
+        // /health/ready probes the external random API. We don't control whether that
+        // dependency is reachable in CI, so assert the endpoint is wired and returns a
+        // health verdict (200 Healthy or 503 Unhealthy) — not a 404/500.
+        var response = await _client.GetAsync("/health/ready");
+
+        Assert.True(
+            response.StatusCode is HttpStatusCode.OK or HttpStatusCode.ServiceUnavailable,
+            $"Expected 200 or 503 from /health/ready, got {(int)response.StatusCode}");
+
+        var body = await response.Content.ReadAsStringAsync();
+        Assert.True(body is "Healthy" or "Unhealthy",
+            $"Expected 'Healthy' or 'Unhealthy' body, got '{body}'");
+    }
+}
+
+/// <summary>
+/// Tests the X-Player-Id session identity logic in GameController: header isolation,
+/// fallback to IP when the header is missing, and the 128-character guard.
+/// Each test gets its own factory so scoreboards don't leak between tests.
+/// </summary>
+public class SessionIdentityTests : IDisposable
+{
+    private readonly WebApplicationFactory<Program> _factory;
+
+    public SessionIdentityTests()
+    {
+        _factory = new WebApplicationFactory<Program>()
+            .WithWebHostBuilder(builder =>
+                builder.ConfigureServices(services =>
+                    services.AddSingleton<IRandomService, FakeRandomService>()));
+    }
+
+    public void Dispose() => _factory.Dispose();
+
+    private HttpClient ClientWithPlayerId(string? playerId)
+    {
+        var client = _factory.CreateClient();
+        if (playerId is not null)
+            client.DefaultRequestHeaders.Add("X-Player-Id", playerId);
+        return client;
+    }
+
+    [Fact]
+    public async Task DifferentPlayerIds_HaveSeparateScoreboards()
+    {
+        using var alice = ClientWithPlayerId("alice");
+        using var bob = ClientWithPlayerId("bob");
+
+        await alice.PostAsJsonAsync("/play", new { player = 1 });
+
+        var aliceBoard = await alice.GetFromJsonAsync<List<PlayResult>>("/scoreboard");
+        var bobBoard = await bob.GetFromJsonAsync<List<PlayResult>>("/scoreboard");
+
+        Assert.Single(aliceBoard!);
+        Assert.Empty(bobBoard!);
+    }
+
+    [Fact]
+    public async Task MissingHeader_FallsBackToIp_StillWorks()
+    {
+        // No X-Player-Id header — controller falls back to the connection IP.
+        using var client = ClientWithPlayerId(null);
+
+        var play = await client.PostAsJsonAsync("/play", new { player = 1 });
+        Assert.Equal(HttpStatusCode.OK, play.StatusCode);
+
+        var board = await client.GetFromJsonAsync<List<PlayResult>>("/scoreboard");
+        Assert.Single(board!);
+    }
+
+    [Fact]
+    public async Task HeaderOver128Chars_FallsBackToIp()
+    {
+        // A 129-char header exceeds the guard, so the controller falls back to IP.
+        // We prove this: a play with the oversized header lands on the IP-based board,
+        // which a no-header request from the same client can then read back.
+        var oversized = new string('x', 129);
+        using var oversizedClient = ClientWithPlayerId(oversized);
+        using var noHeaderClient = ClientWithPlayerId(null);
+
+        await oversizedClient.PostAsJsonAsync("/play", new { player = 1 });
+
+        // Same loopback IP → same fallback key → the no-header client sees the result.
+        var board = await noHeaderClient.GetFromJsonAsync<List<PlayResult>>("/scoreboard");
+        Assert.Single(board!);
+    }
+
+    [Fact]
+    public async Task HeaderAt128Chars_IsAccepted()
+    {
+        // Exactly 128 chars is within the guard, so it's used as its own session key
+        // and does NOT collide with the IP fallback board.
+        var maxLength = new string('y', 128);
+        using var maxClient = ClientWithPlayerId(maxLength);
+        using var noHeaderClient = ClientWithPlayerId(null);
+
+        await maxClient.PostAsJsonAsync("/play", new { player = 1 });
+
+        var noHeaderBoard = await noHeaderClient.GetFromJsonAsync<List<PlayResult>>("/scoreboard");
+        Assert.Empty(noHeaderBoard!);  // distinct key — not on the IP fallback board
+    }
+}
+
+/// <summary>
+/// Tests that baseline security headers are present on responses.
+/// </summary>
+public class SecurityHeadersTests : IDisposable
+{
+    private readonly WebApplicationFactory<Program> _factory;
+    private readonly HttpClient _client;
+
+    public SecurityHeadersTests()
+    {
+        _factory = new WebApplicationFactory<Program>()
+            .WithWebHostBuilder(builder =>
+                builder.ConfigureServices(services =>
+                    services.AddSingleton<IRandomService, FakeRandomService>()));
+
+        _client = _factory.CreateClient();
+    }
+
+    public void Dispose()
+    {
+        _client.Dispose();
+        _factory.Dispose();
+    }
+
+    [Fact]
+    public async Task Response_ContainsContentTypeOptionsHeader()
+    {
+        var response = await _client.GetAsync("/choices");
+        Assert.Equal("nosniff", response.Headers.GetValues("X-Content-Type-Options").First());
+    }
+
+    [Fact]
+    public async Task Response_ContainsFrameOptionsHeader()
+    {
+        var response = await _client.GetAsync("/choices");
+        Assert.Equal("DENY", response.Headers.GetValues("X-Frame-Options").First());
+    }
+
+    [Fact]
+    public async Task Response_ContainsReferrerPolicyHeader()
+    {
+        var response = await _client.GetAsync("/choices");
+        Assert.Equal("no-referrer", response.Headers.GetValues("Referrer-Policy").First());
+    }
 }
