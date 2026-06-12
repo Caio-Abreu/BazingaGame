@@ -147,87 +147,131 @@ public class GameServiceTests
     private const string Player2 = "player-session-2";
 
     [Fact]
-    public void Scoreboard_StartsEmpty()
+    public async Task Scoreboard_StartsEmpty()
     {
-        Assert.Empty(_sut.GetScoreboard(Player1));
+        Assert.Empty(await _sut.GetScoreboardAsync(Player1));
     }
 
     [Fact]
-    public void AddToScoreboard_AddsResult()
+    public async Task AddToScoreboard_AddsResult()
     {
-        _sut.AddToScoreboard(Player1, new PlayResult("win", 1, 3));
-        Assert.Single(_sut.GetScoreboard(Player1));
+        await _sut.AddToScoreboardAsync(Player1, new PlayResult("win", 1, 3));
+        Assert.Single(await _sut.GetScoreboardAsync(Player1));
     }
 
     [Fact]
-    public void AddToScoreboard_NewestResultIsFirst()
+    public async Task AddToScoreboard_NewestResultIsFirst()
     {
-        _sut.AddToScoreboard(Player1, new PlayResult("win", 1, 3));
-        _sut.AddToScoreboard(Player1, new PlayResult("lose", 2, 5));
+        await _sut.AddToScoreboardAsync(Player1, new PlayResult("win", 1, 3));
+        await _sut.AddToScoreboardAsync(Player1, new PlayResult("lose", 2, 5));
 
-        Assert.Equal("lose", _sut.GetScoreboard(Player1)[0].Results);
+        Assert.Equal("lose", (await _sut.GetScoreboardAsync(Player1))[0].Results);
     }
 
     [Fact]
-    public void Scoreboard_CapsAtTenItems()
+    public async Task Scoreboard_CapsAtTenItems()
     {
         for (var i = 0; i < 12; i++)
-            _sut.AddToScoreboard(Player1, new PlayResult("tie", 1, 1));
+            await _sut.AddToScoreboardAsync(Player1, new PlayResult("tie", 1, 1));
 
-        Assert.Equal(10, _sut.GetScoreboard(Player1).Count);
+        Assert.Equal(10, (await _sut.GetScoreboardAsync(Player1)).Count);
     }
 
     [Fact]
-    public void Scoreboard_EleventhItemDropsOldest()
+    public async Task Scoreboard_EleventhItemDropsOldest()
     {
         for (var i = 0; i < 10; i++)
-            _sut.AddToScoreboard(Player1, new PlayResult("win", 1, 3));
+            await _sut.AddToScoreboardAsync(Player1, new PlayResult("win", 1, 3));
 
-        _sut.AddToScoreboard(Player1, new PlayResult("lose", 3, 1));
+        await _sut.AddToScoreboardAsync(Player1, new PlayResult("lose", 3, 1));
 
-        var board = _sut.GetScoreboard(Player1);
+        var board = await _sut.GetScoreboardAsync(Player1);
         Assert.Equal(10, board.Count);
         Assert.Equal("lose", board[0].Results);
         Assert.Equal(9, board.Count(r => r.Results == "win"));
     }
 
     [Fact]
-    public void ResetScoreboard_ClearsOnlyThatPlayersResults()
+    public async Task ResetScoreboard_ClearsOnlyThatPlayersResults()
     {
-        _sut.AddToScoreboard(Player1, new PlayResult("win", 1, 3));
-        _sut.AddToScoreboard(Player2, new PlayResult("lose", 2, 1));
+        await _sut.AddToScoreboardAsync(Player1, new PlayResult("win", 1, 3));
+        await _sut.AddToScoreboardAsync(Player2, new PlayResult("lose", 2, 1));
 
-        _sut.ResetScoreboard(Player1);
+        await _sut.ResetScoreboardAsync(Player1);
 
-        Assert.Empty(_sut.GetScoreboard(Player1));
-        Assert.Single(_sut.GetScoreboard(Player2));  // player 2 unaffected
+        Assert.Empty(await _sut.GetScoreboardAsync(Player1));
+        Assert.Single(await _sut.GetScoreboardAsync(Player2));
     }
 
     [Fact]
-    public void Scoreboard_IsSeparatePerPlayer()
+    public async Task Scoreboard_IsSeparatePerPlayer()
     {
-        _sut.AddToScoreboard(Player1, new PlayResult("win", 1, 3));
-        _sut.AddToScoreboard(Player1, new PlayResult("win", 1, 3));
-        _sut.AddToScoreboard(Player2, new PlayResult("lose", 3, 1));
+        await _sut.AddToScoreboardAsync(Player1, new PlayResult("win", 1, 3));
+        await _sut.AddToScoreboardAsync(Player1, new PlayResult("win", 1, 3));
+        await _sut.AddToScoreboardAsync(Player2, new PlayResult("lose", 3, 1));
 
-        Assert.Equal(2, _sut.GetScoreboard(Player1).Count);
-        Assert.Single(_sut.GetScoreboard(Player2));
+        Assert.Equal(2, (await _sut.GetScoreboardAsync(Player1)).Count);
+        Assert.Single(await _sut.GetScoreboardAsync(Player2));
     }
 
     [Fact]
-    public void GetScoreboard_UnknownPlayer_ReturnsEmpty()
+    public async Task GetScoreboard_UnknownPlayer_ReturnsEmpty()
     {
-        Assert.Empty(_sut.GetScoreboard("never-played-before"));
+        Assert.Empty(await _sut.GetScoreboardAsync("never-played-before"));
     }
 
     [Fact]
-    public void GetScoreboard_ReturnsCopy_NotLiveReference()
+    public async Task GetScoreboard_ReturnsCopy_NotLiveReference()
     {
-        _sut.AddToScoreboard(Player1, new PlayResult("win", 1, 3));
-        var snapshot = _sut.GetScoreboard(Player1);
+        await _sut.AddToScoreboardAsync(Player1, new PlayResult("win", 1, 3));
+        var snapshot = await _sut.GetScoreboardAsync(Player1);
 
-        _sut.AddToScoreboard(Player1, new PlayResult("lose", 2, 1));
+        await _sut.AddToScoreboardAsync(Player1, new PlayResult("lose", 2, 1));
 
         Assert.Single(snapshot);
+    }
+}
+
+/// <summary>
+/// Direct unit tests for GameRules — the shared logic used by both GameService and RedisGameService.
+/// </summary>
+public class GameRulesTests
+{
+    [Theory]
+    [InlineData(1, 3, "win")]
+    [InlineData(1, 4, "win")]
+    [InlineData(2, 1, "win")]
+    [InlineData(3, 2, "win")]
+    [InlineData(1, 2, "lose")]
+    [InlineData(2, 3, "lose")]
+    [InlineData(1, 1, "tie")]
+    [InlineData(3, 3, "tie")]
+    public void DetermineResult_AllOutcomes(int player, int computer, string expected)
+    {
+        var result = GameRules.DetermineResult(player, computer);
+        Assert.Equal(expected, result.Results);
+    }
+
+    [Theory]
+    [InlineData(1, "rock")]
+    [InlineData(2, "paper")]
+    [InlineData(3, "scissors")]
+    [InlineData(4, "lizard")]
+    [InlineData(5, "spock")]
+    public void GetChoiceById_ReturnsCorrectName(int id, string name)
+    {
+        Assert.Equal(name, GameRules.GetChoiceById(id).Name);
+    }
+
+    [Fact]
+    public void Choices_HasFiveItems()
+    {
+        Assert.Equal(5, GameRules.Choices.Count);
+    }
+
+    [Fact]
+    public void GetChoiceById_InvalidId_Throws()
+    {
+        Assert.Throws<ArgumentOutOfRangeException>(() => GameRules.GetChoiceById(99));
     }
 }

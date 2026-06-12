@@ -7,12 +7,12 @@ namespace BazingaGame.Services;
 /// <summary>
 /// Redis-backed implementation of IGameService.
 ///
-/// Uses IConnectionMultiplexer (raw StackExchange.Redis) instead of IDistributedCache
-/// so we can pipeline LPUSH + LTRIM + EXPIRE as a single atomic transaction.
-/// This eliminates the read-modify-write race that IDistributedCache would introduce.
+/// Uses IConnectionMultiplexer (raw StackExchange.Redis) so scoreboard writes pipeline
+/// LPUSH + LTRIM + EXPIRE atomically — no read-modify-write race.
 ///
-/// Failure strategy: if Redis is unreachable, all scoreboard operations degrade gracefully —
-/// reads return empty, writes are dropped — so the game keeps working without the dependency.
+/// Failure strategy: RedisException is caught on every operation so the game keeps
+/// working if Redis is unreachable. Reads return empty; writes and resets are dropped.
+/// All failures are logged with structured properties for observability.
 /// </summary>
 public class RedisGameService(
     IConnectionMultiplexer redis,
@@ -21,7 +21,8 @@ public class RedisGameService(
 {
     private static string CacheKey(string playerSessionId) => $"scoreboard:{playerSessionId}";
 
-    private TimeSpan Expiration => TimeSpan.FromHours(
+    // Computed once — configuration does not change at runtime.
+    private readonly TimeSpan _expiration = TimeSpan.FromHours(
         configuration.GetValue<int>("Game:ScoreboardExpirationHours", 6));
 
     public IReadOnlyList<Choice> GetAllChoices() => GameRules.Choices;
@@ -31,7 +32,7 @@ public class RedisGameService(
     public PlayResult DetermineResult(int playerId, int computerId) =>
         GameRules.DetermineResult(playerId, computerId);
 
-    public void AddToScoreboard(string playerSessionId, PlayResult result)
+    public async Task AddToScoreboardAsync(string playerSessionId, PlayResult result)
     {
         try
         {
@@ -39,13 +40,14 @@ public class RedisGameService(
             var key = CacheKey(playerSessionId);
             var serialized = JsonSerializer.Serialize(result);
 
-            // Atomic pipeline: LPUSH prepends the new result, LTRIM caps the list at 10,
-            // EXPIRE refreshes the sliding window — all in one round-trip.
+            // Atomic pipeline: LPUSH prepends, LTRIM caps at 10, EXPIRE refreshes the window.
             var batch = db.CreateBatch();
-            _ = batch.ListLeftPushAsync(key, serialized);
-            _ = batch.ListTrimAsync(key, 0, 9);
-            _ = batch.KeyExpireAsync(key, Expiration);
+            var pushTask = batch.ListLeftPushAsync(key, serialized);
+            var trimTask = batch.ListTrimAsync(key, 0, 9);
+            var expireTask = batch.KeyExpireAsync(key, _expiration);
             batch.Execute();
+
+            await Task.WhenAll(pushTask, trimTask, expireTask);
         }
         catch (RedisException ex)
         {
@@ -56,19 +58,32 @@ public class RedisGameService(
         }
     }
 
-    public IReadOnlyList<PlayResult> GetScoreboard(string playerSessionId)
+    public async Task<IReadOnlyList<PlayResult>> GetScoreboardAsync(string playerSessionId)
     {
         try
         {
             var db = redis.GetDatabase();
-            var entries = db.ListRange(CacheKey(playerSessionId), 0, 9);
+            var entries = await db.ListRangeAsync(CacheKey(playerSessionId), 0, 9);
 
-            return entries
-                .Select(e => JsonSerializer.Deserialize<PlayResult>(e!))
-                .Where(r => r is not null)
-                .Select(r => r!)
-                .ToList()
-                .AsReadOnly();
+            var results = new List<PlayResult>();
+            foreach (var entry in entries)
+            {
+                try
+                {
+                    var deserialized = JsonSerializer.Deserialize<PlayResult>(entry!);
+                    if (deserialized is null) throw new JsonException("Deserialized to null.");
+                    results.Add(deserialized);
+                }
+                catch (JsonException)
+                {
+                    logger.LogWarning(
+                        "Corrupt scoreboard entry in Redis — skipping. " +
+                        "PlayerSessionId={PlayerSessionId} Entry={Entry}",
+                        playerSessionId, (string)entry!);
+                }
+            }
+
+            return results.AsReadOnly();
         }
         catch (RedisException ex)
         {
@@ -80,11 +95,11 @@ public class RedisGameService(
         }
     }
 
-    public void ResetScoreboard(string playerSessionId)
+    public async Task ResetScoreboardAsync(string playerSessionId)
     {
         try
         {
-            redis.GetDatabase().KeyDelete(CacheKey(playerSessionId));
+            await redis.GetDatabase().KeyDeleteAsync(CacheKey(playerSessionId));
         }
         catch (RedisException ex)
         {
