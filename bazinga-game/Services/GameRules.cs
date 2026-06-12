@@ -2,9 +2,9 @@ using BazingaGame.Models;
 
 namespace BazingaGame.Services;
 
-internal static class GameRules
+public static class GameRules
 {
-    internal static readonly IReadOnlyList<Choice> Choices =
+    public static readonly IReadOnlyList<Choice> Choices =
     [
         new(1, "rock"),
         new(2, "paper"),
@@ -22,11 +22,11 @@ internal static class GameRules
         (5, 3), (5, 1),  // spock beats scissors, rock
     ];
 
-    internal static Choice GetChoiceById(int id) =>
+    public static Choice GetChoiceById(int id) =>
         Choices.FirstOrDefault(c => c.Id == id)
             ?? throw new ArgumentOutOfRangeException(nameof(id), id, $"No choice exists with id {id}.");
 
-    internal static PlayResult DetermineResult(int playerId, int computerId)
+    public static PlayResult DetermineResult(int playerId, int computerId)
     {
         if (playerId < 1 || playerId > 5)
             throw new ArgumentOutOfRangeException(nameof(playerId), playerId,

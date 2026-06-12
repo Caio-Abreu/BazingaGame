@@ -45,7 +45,7 @@ public class GameController(
     {
         var computerId = await randomService.GetRandomChoiceIdAsync();
         var result = gameService.DetermineResult(request.Player, computerId);
-        gameService.AddToScoreboard(PlayerSessionId, result);
+        await gameService.AddToScoreboardAsync(PlayerSessionId, result);
 
         logger.LogInformation(
             "Game played: sessionId={SessionId} player={Player} computer={Computer} result={Result}",
@@ -57,15 +57,15 @@ public class GameController(
     [HttpGet("/scoreboard")]
     [EnableRateLimiting("read")]
     [ProducesResponseType(typeof(IReadOnlyList<PlayResult>), 200)]
-    public ActionResult<IReadOnlyList<PlayResult>> GetScoreboard() =>
-        Ok(gameService.GetScoreboard(PlayerSessionId));
+    public async Task<ActionResult<IReadOnlyList<PlayResult>>> GetScoreboard() =>
+        Ok(await gameService.GetScoreboardAsync(PlayerSessionId));
 
     [HttpDelete("/scoreboard")]
     [EnableRateLimiting("play")]
     [ProducesResponseType(204)]
-    public IActionResult ResetScoreboard()
+    public async Task<IActionResult> ResetScoreboard()
     {
-        gameService.ResetScoreboard(PlayerSessionId);
+        await gameService.ResetScoreboardAsync(PlayerSessionId);
         return NoContent();
     }
 }
