@@ -38,3 +38,19 @@
 .choice-btn .label {
   text-transform: capitalize;
 }
+
+@media (max-width: 480px) {
+  .choices {
+    gap: 0.5rem;
+  }
+
+  .choice-btn {
+    min-width: 60px;
+    padding: 0.5rem 0.6rem;
+    font-size: 0.8rem;
+  }
+
+  .choice-btn .icon {
+    font-size: 1.5rem;
+  }
+}

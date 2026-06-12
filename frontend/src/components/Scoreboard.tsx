@@ -1,15 +1,17 @@
 import "./Scoreboard.css";
 import type { ScoredResult } from "../types/game";
 import { choiceIcon } from "../constants/game";
+import { useChoiceMap } from "../context/ChoiceContext";
 
 interface Props {
   scoreboard: ScoredResult[];
   disabled: boolean;
   onReset: () => void;
-  choiceMap: Record<string, string>;
 }
 
-export function Scoreboard({ scoreboard, disabled, onReset, choiceMap }: Readonly<Props>) {
+export function Scoreboard({ scoreboard, disabled, onReset }: Readonly<Props>) {
+  const choiceMap = useChoiceMap();
+
   return (
     <div className="scoreboard">
       <div className="scoreboard-header">
@@ -25,12 +27,12 @@ export function Scoreboard({ scoreboard, disabled, onReset, choiceMap }: Readonl
       {scoreboard.length === 0 ? (
         <p className="empty">No games played yet.</p>
       ) : (
-        <ul>
+        <ul aria-label="Last 10 results">
           {scoreboard.map((r) => (
             <li key={r.id} className={`score-item score-item--${r.results}`}>
               <span>{r.results.toUpperCase()}</span>
-              <span>
-                {choiceIcon(choiceMap[String(r.player)])} vs {choiceIcon(choiceMap[String(r.computer)])}
+              <span aria-label={`${choiceMap[String(r.player)]} vs ${choiceMap[String(r.computer)]}`}>
+                <span aria-hidden="true">{choiceIcon(choiceMap[String(r.player)])} vs {choiceIcon(choiceMap[String(r.computer)])}</span>
               </span>
             </li>
           ))}

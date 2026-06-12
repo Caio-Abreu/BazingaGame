@@ -69,3 +69,15 @@
   background: #fefce8;
   color: #713f12;
 }
+
+@media (max-width: 480px) {
+  .scoreboard ul {
+    max-height: 260px;
+    overflow-y: auto;
+  }
+
+  .score-item {
+    font-size: 0.8rem;
+    padding: 0.3rem 0.5rem;
+  }
+}
