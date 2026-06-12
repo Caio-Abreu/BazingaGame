@@ -23,13 +23,14 @@ public class GameController(
     [HttpGet("/choices")]
     [EnableRateLimiting("read")]
     [ProducesResponseType(typeof(IReadOnlyList<Choice>), 200)]
+    [ProducesResponseType(typeof(ErrorResponse), 429)]
     public ActionResult<IReadOnlyList<Choice>> GetChoices() =>
         Ok(gameService.GetAllChoices());
 
     [HttpGet("/choice")]
     [EnableRateLimiting("read")]
     [ProducesResponseType(typeof(Choice), 200)]
-    [ProducesResponseType(429)]
+    [ProducesResponseType(typeof(ErrorResponse), 429)]
     public async Task<ActionResult<Choice>> GetChoice()
     {
         var id = await randomService.GetRandomChoiceIdAsync();
@@ -39,8 +40,9 @@ public class GameController(
     [HttpPost("/play")]
     [EnableRateLimiting("play")]
     [ProducesResponseType(typeof(PlayResult), 200)]
-    [ProducesResponseType(400)]
-    [ProducesResponseType(429)]
+    [ProducesResponseType(typeof(ValidationProblemDetails), 400)]
+    [ProducesResponseType(typeof(ErrorResponse), 429)]
+    [ProducesResponseType(typeof(ErrorResponse), 500)]
     public async Task<ActionResult<PlayResult>> Play([FromBody] PlayRequest request)
     {
         var computerId = await randomService.GetRandomChoiceIdAsync();
@@ -57,12 +59,14 @@ public class GameController(
     [HttpGet("/scoreboard")]
     [EnableRateLimiting("read")]
     [ProducesResponseType(typeof(IReadOnlyList<PlayResult>), 200)]
+    [ProducesResponseType(typeof(ErrorResponse), 429)]
     public async Task<ActionResult<IReadOnlyList<PlayResult>>> GetScoreboard() =>
         Ok(await gameService.GetScoreboardAsync(PlayerSessionId));
 
     [HttpDelete("/scoreboard")]
     [EnableRateLimiting("play")]
     [ProducesResponseType(204)]
+    [ProducesResponseType(typeof(ErrorResponse), 429)]
     public async Task<IActionResult> ResetScoreboard()
     {
         await gameService.ResetScoreboardAsync(PlayerSessionId);
