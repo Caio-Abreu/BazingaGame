@@ -142,10 +142,24 @@ Key settings in `appsettings.json`:
 
 | Key | Default | Description |
 |-----|---------|-------------|
-| `Game:ScoreboardExpirationHours` | `6` | Hours of inactivity before a player's scoreboard is evicted from cache |
+| `ConnectionStrings:Redis` | `""` | Redis connection string — when empty, falls back to in-memory cache |
+| `Game:ScoreboardExpirationHours` | `6` | Hours of inactivity before a player's scoreboard is evicted |
 | `Cors:AllowedOrigin` | `http://localhost:5173` | Frontend origin allowed by CORS |
 
-Can be overridden with environment variables: `Game__ScoreboardExpirationHours=12`, `Cors__AllowedOrigin=https://mygame.com`
+Can be overridden with environment variables: `ConnectionStrings__Redis=localhost:6379`, `Game__ScoreboardExpirationHours=12`, `Cors__AllowedOrigin=https://mygame.com`
+
+### Running with Redis locally (without Docker)
+
+```bash
+docker run -d -p 6379:6379 redis:7-alpine
+```
+
+Then set the connection string before starting the API:
+
+```bash
+export ConnectionStrings__Redis=localhost:6379
+dotnet run
+```
 
 ## Contributing
 
