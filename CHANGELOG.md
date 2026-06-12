@@ -7,6 +7,21 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.1.1] — 2026-06-12
+
+### Fixed
+- **Favicon 404 in production** — `bazingaLogo.svg` lived in `src/assets/` but `index.html` referenced it at `/bazingaLogo.svg`, the path Vite serves from `public/`. Vite never copied it into the build output, so the favicon failed to load. Moved the file to `public/` so it ships in `dist/` and resolves correctly.
+
+### Changed
+- Added `.idea/` and `.vscode/` to `.gitignore` so IDE files aren't committed
+- Removed the leftover default Vite template README from `frontend/` (the root README documents the frontend)
+- Documented the release process and back-merge strategy in the README
+
+### Notes
+- No breaking changes; backward compatible with 1.1.0
+
+---
+
 ## [1.1.0] — 2026-06-12
 
 ### Added
