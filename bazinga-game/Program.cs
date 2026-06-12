@@ -1,7 +1,10 @@
 using System.Threading.RateLimiting;
 using BazingaGame.Middleware;
+using BazingaGame.Models;
 using BazingaGame.Services;
 using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.OpenApi.Any;
+using Microsoft.OpenApi.Models;
 using Serilog;
 using StackExchange.Redis;
 
@@ -21,7 +24,44 @@ builder.Services.AddControllers()
 builder.Services.Configure<Microsoft.AspNetCore.Mvc.ApiBehaviorOptions>(options =>
     options.SuppressMapClientErrors = true);
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(options =>
+{
+    // Swashbuckle cannot introspect Dictionary<string,string[]> record properties —
+    // it throws a NullReferenceException during schema generation. Provide the full
+    // ValidationErrorResponse schema manually so Swagger shows the real 400 shape.
+    options.MapType<ValidationErrorResponse>(() => new OpenApiSchema
+    {
+        Type = "object",
+        Properties = new Dictionary<string, OpenApiSchema>
+        {
+            ["title"] = new OpenApiSchema { Type = "string" },
+            ["status"] = new OpenApiSchema { Type = "integer" },
+            ["errors"] = new OpenApiSchema
+            {
+                Type = "object",
+                Example = new OpenApiObject
+                {
+                    ["Player"] = new OpenApiArray
+                    {
+                        new OpenApiString("The field Player must be between 1 and 5.")
+                    }
+                }
+            }
+        },
+        Example = new OpenApiObject
+        {
+            ["title"] = new OpenApiString("One or more validation errors occurred."),
+            ["status"] = new OpenApiInteger(400),
+            ["errors"] = new OpenApiObject
+            {
+                ["Player"] = new OpenApiArray
+                {
+                    new OpenApiString("The field Player must be between 1 and 5.")
+                }
+            }
+        }
+    });
+});
 
 builder.Services.AddHttpClient<IRandomService, RandomService>()
     .AddStandardResilienceHandler(options =>
