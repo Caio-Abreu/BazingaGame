@@ -37,7 +37,8 @@ Now listening on: http://localhost:5000
 
 - API: `http://localhost:5000`
 - Swagger UI (interactive docs): `http://localhost:5000/swagger`
-- Health check: `http://localhost:5000/health`
+- Liveness: `http://localhost:5000/health/live`
+- Readiness: `http://localhost:5000/health/ready`
 
 ### 3. Start the frontend (Terminal 2)
 

@@ -12,12 +12,6 @@ public class FakeRandomService(int choiceId = 1) : IRandomService
     public Task<int> GetRandomChoiceIdAsync() => Task.FromResult(choiceId);
 }
 
-public class ThrowingRandomService : IRandomService
-{
-    public Task<int> GetRandomChoiceIdAsync() =>
-        throw new HttpRequestException("External random API unavailable");
-}
-
 /// <summary>
 /// Each test class gets a fresh WebApplicationFactory — isolated singleton scoreboard per test.
 /// NOT using IClassFixture because GameService is Singleton: shared state across tests
