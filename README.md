@@ -37,7 +37,8 @@ Now listening on: http://localhost:5000
 
 - API: `http://localhost:5000`
 - Swagger UI (interactive docs): `http://localhost:5000/swagger`
-- Health check: `http://localhost:5000/health`
+- Liveness: `http://localhost:5000/health/live`
+- Readiness: `http://localhost:5000/health/ready`
 
 ### 3. Start the frontend (Terminal 2)
 
@@ -78,6 +79,8 @@ Two compose files control the environment:
 ```bash
 docker compose up --build
 ```
+
+Swagger UI is available at `http://localhost/api/swagger` in this mode.
 
 ### Production
 
@@ -142,10 +145,79 @@ Key settings in `appsettings.json`:
 
 | Key | Default | Description |
 |-----|---------|-------------|
-| `Game:ScoreboardExpirationHours` | `6` | Hours of inactivity before a player's scoreboard is evicted from cache |
+| `ConnectionStrings:Redis` | `""` | Redis connection string — when empty, falls back to in-memory cache |
+| `Game:ScoreboardExpirationHours` | `6` | Hours of inactivity before a player's scoreboard is evicted |
 | `Cors:AllowedOrigin` | `http://localhost:5173` | Frontend origin allowed by CORS |
 
-Can be overridden with environment variables: `Game__ScoreboardExpirationHours=12`, `Cors__AllowedOrigin=https://mygame.com`
+Can be overridden with environment variables: `ConnectionStrings__Redis=localhost:6379`, `Game__ScoreboardExpirationHours=12`, `Cors__AllowedOrigin=https://mygame.com`
+
+### Running with Redis locally (without Docker)
+
+```bash
+docker run -d -p 6379:6379 redis:7-alpine
+```
+
+Then set the connection string before starting the API:
+
+```bash
+export ConnectionStrings__Redis=localhost:6379
+dotnet run
+```
+
+## Contributing
+
+### Branch Strategy
+
+| Branch | Purpose |
+|--------|---------|
+| `main` | Production-ready code — never commit directly |
+| `develop` | Integration branch — all feature work merges here first |
+| `feature/*` | New features — branch off `develop` |
+| `fix/*` | Bug fixes — branch off `develop` |
+| `docs/*` | Documentation only — branch off `develop` |
+
+```bash
+# Start a new piece of work
+git checkout develop
+git pull origin develop
+git checkout -b feature/my-feature
+
+# When done, push and open a PR → develop
+git push origin feature/my-feature
+```
+
+### Commit Convention
+
+Follows [Conventional Commits](https://www.conventionalcommits.org/):
+
+| Prefix | When to use |
+|--------|-------------|
+| `feat:` | New feature |
+| `fix:` | Bug fix |
+| `test:` | Adding or updating tests |
+| `refactor:` | Code change that isn't a fix or feature |
+| `docs:` | README, DECISIONS.md, comments |
+| `chore:` | Build config, dependencies, tooling |
+| `obs:` | Observability — logging, metrics, tracing |
+
+Examples:
+```
+feat: add per-player scoreboard with sliding expiration
+fix: handle int.MinValue overflow in random number mapping
+test: add rate limiting and CORS integration tests
+docs: document structured logging decision for random fallback
+```
+
+## AI Usage
+
+[Claude Code](https://claude.ai/code) (Anthropic's CLI) was used throughout this project as a pair programming tool — scaffolding boilerplate, explaining .NET patterns, suggesting refactors, and catching bugs. All architectural decisions, code review, and reasoning behind trade-offs were my own. The tool accelerated implementation; it did not replace understanding.
+
+Specific areas where AI assistance was used:
+- Initial project scaffold and folder structure
+- Docker and nginx configuration
+- Identifying the `random_number` snake_case deserialisation bug in `RandomService`
+- Frontend component decomposition and `useGame` hook design
+- Unit and integration test setup (Vitest + React Testing Library)
 
 ## Game Rules
 
