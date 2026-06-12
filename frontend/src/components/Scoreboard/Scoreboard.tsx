@@ -1,7 +1,9 @@
+import { useState } from "react";
 import "./Scoreboard.css";
 import type { ScoredResult } from "../../types/game";
 import { choiceIcon } from "../../constants/game";
 import { useChoiceMap } from "../../context/ChoiceContext";
+import { HowToPlay } from "../HowToPlay/HowToPlay";
 
 interface Props {
   scoreboard: ScoredResult[];
@@ -11,18 +13,25 @@ interface Props {
 
 export function Scoreboard({ scoreboard, disabled, onReset }: Readonly<Props>) {
   const choiceMap = useChoiceMap();
+  const [showHelp, setShowHelp] = useState(false);
 
   return (
     <div className="scoreboard">
+      {showHelp && <HowToPlay onClose={() => setShowHelp(false)} />}
       <div className="scoreboard-header">
         <h3>Last 10 Results</h3>
-        <button
-          className="reset-btn"
-          onClick={onReset}
-          disabled={disabled || scoreboard.length === 0}
-        >
-          Reset
-        </button>
+        <div className="scoreboard-actions">
+          <button className="help-btn" onClick={() => setShowHelp(true)}>
+            How to play
+          </button>
+          <button
+            className="reset-btn"
+            onClick={onReset}
+            disabled={disabled || scoreboard.length === 0}
+          >
+            Reset
+          </button>
+        </div>
       </div>
       {scoreboard.length === 0 ? (
         <p className="empty">No games played yet.</p>

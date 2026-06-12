@@ -1,5 +1,5 @@
 .scoreboard {
-  border-top: 1px solid #e5e7eb;
+  border-top: 1px solid var(--border, #e5e7eb);
   padding-top: 1rem;
 }
 
@@ -10,22 +10,49 @@
   margin-bottom: 0.75rem;
 }
 
+.scoreboard-actions {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.help-btn {
+  background: none;
+  border: 2px solid #ccc;
+  border-radius: 12px;
+  padding: 0.3rem 0.75rem;
+  font-size: 0.85rem;
+  cursor: pointer;
+  color: var(--text-h, #111);
+  transition: border-color 0.2s;
+  white-space: nowrap;
+}
+
+.help-btn:hover {
+  border-color: #555;
+}
+
 .scoreboard-header h3 {
   margin: 0;
+  font-family: var(--heading, system-ui, sans-serif);
+  font-weight: 500;
+  color: var(--text-h, #111);
+  letter-spacing: -0.24px;
 }
 
 .reset-btn {
   padding: 0.3rem 0.75rem;
-  border: 1px solid #333;
-  border-radius: 6px;
-  background: #111;
-  color: #fff;
+  border: 2px solid #ccc;
+  border-radius: 12px;
+  background: var(--bg, #fff);
+  color: var(--text-h, #111);
   cursor: pointer;
   font-size: 0.85rem;
+  transition: border-color 0.2s;
 }
 
 .reset-btn:hover:not(:disabled) {
-  background: #333;
+  border-color: #555;
 }
 
 .reset-btn:disabled {
