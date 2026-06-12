@@ -7,6 +7,22 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.1.0] — 2026-06-12
+
+### Added
+- **"How to Play" rules modal** (`HowToPlay` component) — displays the full RPSSL win-condition matrix so players can learn the rules in-app
+- `HowToPlay.test.tsx` — test coverage for the new modal
+
+### Changed
+- Reorganized frontend components into per-component folders (`ChoiceGrid/`, `ResultCard/`, `Scoreboard/`, `ChoiceSkeleton/`, `ErrorBoundary/`, `HowToPlay/`) — each component now co-locates its `.tsx`, `.css`, and styles
+- Minor styling refinements to `App`, `Scoreboard`, and `ResultCard`
+
+### Notes
+- Frontend test count: 50 tests passing
+- No backend changes; backward compatible with 1.0.x
+
+---
+
 ## [1.0.1] — 2026-06-12
 
 ### Added
