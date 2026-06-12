@@ -170,11 +170,14 @@ dotnet run
 
 | Branch | Purpose |
 |--------|---------|
-| `main` | Production-ready code — never commit directly |
-| `develop` | Integration branch — all feature work merges here first |
+| `main` | Production-ready, released code — never commit directly. Every commit is a tagged release |
+| `develop` | Integration branch — all feature work merges here first. Carries the next `-dev` version |
 | `feature/*` | New features — branch off `develop` |
 | `fix/*` | Bug fixes — branch off `develop` |
 | `docs/*` | Documentation only — branch off `develop` |
+| `release/*` | Release preparation — branch off `develop`, merge into `main` |
+| `hotfix/*` | Urgent production fix — branch off `main`, merge into `main` |
+| `backmerge/*` | Syncs `main` back into `develop` after a release or hotfix |
 
 ```bash
 # Start a new piece of work
@@ -207,6 +210,65 @@ fix: handle int.MinValue overflow in random number mapping
 test: add rate limiting and CORS integration tests
 docs: document structured logging decision for random fallback
 ```
+
+### Versioning & Releasing
+
+Versions follow [Semantic Versioning](https://semver.org/) — `MAJOR.MINOR.PATCH`:
+
+| Bump | When |
+|------|------|
+| `MAJOR` | Breaking API change |
+| `MINOR` | New backward-compatible feature |
+| `PATCH` | Bug fix or internal change |
+
+The version lives in two places, kept in sync: `bazinga-game/bazinga-game.csproj`
+(`<Version>`) and `frontend/package.json` (`version`). `main` always carries the
+released version (e.g. `1.1.0`); `develop` carries the next anticipated release with
+a `-dev` suffix (e.g. `1.2.0-dev`) so development builds are never mistaken for a
+release. The `AssemblyVersion`/`FileVersion` fields must stay numeric (no suffix).
+
+#### Standard release (from `develop`)
+
+```bash
+# 1. Branch a release off develop and bump the version + CHANGELOG
+git checkout develop && git pull origin develop
+git checkout -b release/v1.2.0
+#    edit bazinga-game.csproj, package.json, CHANGELOG.md → commit
+
+# 2. Open a PR  release/v1.2.0 → main  and merge it
+
+# 3. Tag the release commit on main and push the tag
+git checkout main && git pull origin main
+git tag -a v1.2.0 -m "Release v1.2.0"
+git push origin v1.2.0
+
+# 4. Create the GitHub Release from the tag (uses CHANGELOG as notes)
+gh release create v1.2.0 --title "v1.2.0" --notes-file CHANGELOG.md
+
+# 5. Back-merge main into develop and bump develop to the next -dev version
+git checkout -b backmerge/main-to-develop origin/main
+#    bump version to 1.3.0-dev → commit
+git push origin backmerge/main-to-develop
+#    open a PR  backmerge/main-to-develop → develop  (use a MERGE commit, not squash)
+```
+
+#### Hotfix (urgent fix to a deployed release)
+
+```bash
+# 1. Branch off main (NOT develop), make the fix, bump the PATCH version
+git checkout main && git pull origin main
+git checkout -b hotfix/v1.2.1
+#    fix + bump csproj/package.json/CHANGELOG → commit
+
+# 2. PR  hotfix/v1.2.1 → main, merge, then tag and release as above
+
+# 3. Back-merge main → develop so the fix isn't lost on the next release
+```
+
+> **Why back-merge instead of merging the release branch into both `main` and
+> `develop`?** Back-merging `main` gives `develop` the *exact* state of production —
+> including the merge commit and any hotfixes that landed on `main` directly — so the
+> two branches can never silently diverge.
 
 ## AI Usage
 
