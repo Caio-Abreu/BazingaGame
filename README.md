@@ -80,6 +80,8 @@ Two compose files control the environment:
 docker compose up --build
 ```
 
+Swagger UI is available at `http://localhost/api/swagger` in this mode.
+
 ### Production
 
 Explicitly ignore the override file to use production settings only:
