@@ -10,9 +10,13 @@ The scoreboard is per-player rather than global. Each player is identified by a 
 
 Internally, scoreboards are stored in `IMemoryCache` (built into .NET, no extra package) keyed by `scoreboard:{playerSessionId}`. A **sliding expiration of 6 hours** means entries are automatically evicted after 6 hours of inactivity — a player who never returns doesn't occupy memory forever. This is configurable via `Game:ScoreboardExpirationHours` in `appsettings.json` without a code change.
 
-A raw `Dictionary<string, List<PlayResult>>` was considered but rejected because it grows forever with no eviction policy. `IMemoryCache` handles memory pressure automatically and supports expiration natively.
+A raw `Dictionary<string, List<PlayResult>>` was considered but rejected because it grows forever with no eviction policy.
 
-If persistence across restarts were required, the interface `IGameService` could be re-implemented against Redis or PostgreSQL without touching the controller layer.
+**Storage strategy is environment-driven**: when `ConnectionStrings:Redis` is set, the app uses `RedisGameService` backed by `IDistributedCache`. When it is empty (local dev without Docker), it falls back to `GameService` backed by `IMemoryCache`. The switch happens in `Program.cs` — the controller and tests are unaware of which implementation is active.
+
+`RedisGameService` stores each player's scoreboard as a JSON-serialised list. Reads and writes go through `IDistributedCache.GetString` / `SetString`, which map to Redis `GET` / `SET`. The list is kept at max 10 entries in application code before serialisation — atomicity at this granularity is sufficient because a single player's scoreboard is only ever written by their own requests.
+
+The `IGameService` interface means the storage layer can be swapped to PostgreSQL or DynamoDB without touching the controller or any test.
 
 ## Random Number Service
 

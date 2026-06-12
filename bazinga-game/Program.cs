@@ -30,7 +30,19 @@ builder.Services.AddHttpClient<IRandomService, RandomService>()
         options.CircuitBreaker.FailureRatio = 0.5;
     });
 
-builder.Services.AddSingleton<IGameService, GameService>();
+// Use Redis when a connection string is configured, fall back to in-memory for local dev without Docker.
+var redisConnectionString = builder.Configuration.GetConnectionString("Redis");
+if (!string.IsNullOrEmpty(redisConnectionString))
+{
+    builder.Services.AddStackExchangeRedisCache(options =>
+        options.Configuration = redisConnectionString);
+    builder.Services.AddSingleton<IGameService, RedisGameService>();
+}
+else
+{
+    builder.Services.AddMemoryCache();
+    builder.Services.AddSingleton<IGameService, GameService>();
+}
 
 builder.Services.AddCors(options =>
 {
@@ -72,7 +84,6 @@ builder.Services.AddRateLimiter(options =>
             }));
 });
 
-builder.Services.AddMemoryCache();
 builder.Services.AddHealthChecks()
     .AddUrlGroup(
         new Uri("https://codechallenge.boohma.com/random"),
