@@ -1,5 +1,6 @@
 using System.Threading.RateLimiting;
 using BazingaGame.Middleware;
+using BazingaGame.Models;
 using BazingaGame.Services;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.OpenApi.Any;
@@ -25,16 +26,38 @@ builder.Services.Configure<Microsoft.AspNetCore.Mvc.ApiBehaviorOptions>(options 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
-    // The errors dictionary has dynamic keys (field names) so Swashbuckle renders
-    // additionalProp1/2/3 placeholders. Override with a concrete example instead.
-    options.MapType<Dictionary<string, string[]>>(() => new OpenApiSchema
+    // Swashbuckle cannot introspect Dictionary<string,string[]> record properties —
+    // it throws a NullReferenceException during schema generation. Provide the full
+    // ValidationErrorResponse schema manually so Swagger shows the real 400 shape.
+    options.MapType<ValidationErrorResponse>(() => new OpenApiSchema
     {
         Type = "object",
+        Properties = new Dictionary<string, OpenApiSchema>
+        {
+            ["title"] = new OpenApiSchema { Type = "string" },
+            ["status"] = new OpenApiSchema { Type = "integer" },
+            ["errors"] = new OpenApiSchema
+            {
+                Type = "object",
+                Example = new OpenApiObject
+                {
+                    ["Player"] = new OpenApiArray
+                    {
+                        new OpenApiString("The field Player must be between 1 and 5.")
+                    }
+                }
+            }
+        },
         Example = new OpenApiObject
         {
-            ["Player"] = new OpenApiArray
+            ["title"] = new OpenApiString("One or more validation errors occurred."),
+            ["status"] = new OpenApiInteger(400),
+            ["errors"] = new OpenApiObject
             {
-                new OpenApiString("The field Player must be between 1 and 5.")
+                ["Player"] = new OpenApiArray
+                {
+                    new OpenApiString("The field Player must be between 1 and 5.")
+                }
             }
         }
     });
