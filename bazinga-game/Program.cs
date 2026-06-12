@@ -2,6 +2,8 @@ using System.Threading.RateLimiting;
 using BazingaGame.Middleware;
 using BazingaGame.Services;
 using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.OpenApi.Any;
+using Microsoft.OpenApi.Models;
 using Serilog;
 using StackExchange.Redis;
 
@@ -21,7 +23,22 @@ builder.Services.AddControllers()
 builder.Services.Configure<Microsoft.AspNetCore.Mvc.ApiBehaviorOptions>(options =>
     options.SuppressMapClientErrors = true);
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(options =>
+{
+    // The errors dictionary has dynamic keys (field names) so Swashbuckle renders
+    // additionalProp1/2/3 placeholders. Override with a concrete example instead.
+    options.MapType<Dictionary<string, string[]>>(() => new OpenApiSchema
+    {
+        Type = "object",
+        Example = new OpenApiObject
+        {
+            ["Player"] = new OpenApiArray
+            {
+                new OpenApiString("The field Player must be between 1 and 5.")
+            }
+        }
+    });
+});
 
 builder.Services.AddHttpClient<IRandomService, RandomService>()
     .AddStandardResilienceHandler(options =>
