@@ -7,6 +7,21 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.0.1] — 2026-06-12
+
+### Added
+- `SecurityHeadersMiddleware` — sets `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, and `Referrer-Policy: no-referrer` on every response
+- Integration test for the `/health/ready` readiness probe (previously only liveness was tested)
+- `SessionIdentityTests` — covers `X-Player-Id` scoreboard isolation, IP fallback when the header is missing, and the 128-character guard boundary (128 accepted, 129 falls back)
+- `SecurityHeadersTests` — asserts the new security headers are present
+- "Known Trade-offs & Future Work" section in DECISIONS.md documenting conscious scope boundaries
+
+### Notes
+- Test count: 116 → 124
+- No breaking changes; backward compatible with 1.0.0
+
+---
+
 ## [1.0.0] — 2026-06-12
 
 First stable release of the Bazinga Game (RPSSL) full-stack application,
